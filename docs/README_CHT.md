@@ -135,7 +135,7 @@
 | `AGENT_MODE` | 啟用 Agent 策略問股模式（`true`/`false`，預設 `false`） | 可選 |
 | `AGENT_LITELLM_MODEL` | Agent 專用主模型（可選）；留空時繼承 `LITELLM_MODEL`，無 provider 前綴時按 `openai/<model>` 解析 | 可選 |
 | `AGENT_MAX_STEPS` | Agent 最大推理步數（預設 `10`） | 可選 |
-| `AGENT_STRATEGY_DIR` | 自訂策略目錄（預設內建 `strategies/`） | 可選 |
+| `AGENT_SKILL_DIR` | 自訂技能目錄（預設沿用內建 `strategies/` 相容路徑） | 可選 |
 
 #### 3. 啟用 Actions
 
@@ -229,7 +229,7 @@
 | `/api/v1/backtest/results` | GET | 查詢回測結果（分頁） |
 | `/api/v1/backtest/performance` | GET | 獲取整體回測表現 |
 | `/api/v1/backtest/performance/{code}` | GET | 獲取單股回測表現 |
-| `/api/v1/agent/strategies` | GET | 取得可用策略清單（內建/自訂） |
+| `/api/v1/agent/skills` | GET | 取得可用技能清單（內建/自訂） |
 | `/api/v1/agent/chat/stream` | POST (SSE) | Agent 多輪策略對話（流式） |
 | `/api/health` | GET | 健康檢查 |
 

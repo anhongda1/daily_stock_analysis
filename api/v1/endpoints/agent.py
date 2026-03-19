@@ -11,7 +11,7 @@ from typing import Any, Dict, List, Optional
 
 from fastapi import APIRouter, HTTPException
 from fastapi.responses import StreamingResponse
-from pydantic import BaseModel, Field
+from pydantic import AliasChoices, BaseModel, ConfigDict, Field
 
 from src.config import get_config
 from src.services.agent_model_service import list_agent_model_deployments
@@ -38,16 +38,20 @@ logger = logging.getLogger(__name__)
 router = APIRouter()
 
 class ChatRequest(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+
     message: str
     session_id: Optional[str] = None
-    skills: Optional[List[str]] = None  # Deprecated, use strategies
-    strategies: Optional[List[str]] = None  # Trading strategy ids to activate
+    skills: Optional[List[str]] = Field(
+        default=None,
+        validation_alias=AliasChoices("skills", "strategies"),
+    )
     context: Optional[Dict[str, Any]] = None  # Previous analysis context for data reuse
 
     @property
-    def effective_strategies(self) -> Optional[List[str]]:
-        """Return strategies, falling back to legacy skills field."""
-        return self.strategies or self.skills
+    def effective_skills(self) -> Optional[List[str]]:
+        """Return skill ids from the unified request shape."""
+        return self.skills
 
 class ChatResponse(BaseModel):
     success: bool
@@ -55,13 +59,14 @@ class ChatResponse(BaseModel):
     session_id: str
     error: Optional[str] = None
 
-class StrategyInfo(BaseModel):
+class SkillInfo(BaseModel):
     id: str
     name: str
     description: str
 
-class StrategiesResponse(BaseModel):
-    strategies: List[StrategyInfo]
+class SkillsResponse(BaseModel):
+    skills: List[SkillInfo]
+    default_skill_id: str = ""
 
 
 class AgentModelDeployment(BaseModel):
@@ -88,20 +93,31 @@ async def get_agent_models():
     )
 
 
-@router.get("/strategies", response_model=StrategiesResponse)
-async def get_strategies():
+@router.get("/skills", response_model=SkillsResponse)
+async def get_skills():
     """
-    Get available agent strategies.
+    Get available agent skills.
     """
     config = get_config()
     from src.agent.factory import get_skill_manager
+    from src.agent.skills.defaults import get_primary_default_skill_id
 
     skill_manager = get_skill_manager(config)
-    strategies = [
-        StrategyInfo(id=skill_id, name=skill.display_name, description=skill.description)
+    skills = [
+        SkillInfo(id=skill_id, name=skill.display_name, description=skill.description)
         for skill_id, skill in skill_manager._skills.items()
+        if getattr(skill, "user_invocable", True)
     ]
-    return StrategiesResponse(strategies=strategies)
+    return SkillsResponse(
+        skills=skills,
+        default_skill_id=get_primary_default_skill_id(skill.id for skill in skills),
+    )
+
+
+@router.get("/strategies", response_model=SkillsResponse, include_in_schema=False)
+async def get_strategies():
+    """Compatibility alias for legacy clients."""
+    return await get_skills()
 
 @router.post("/chat", response_model=ChatResponse)
 async def agent_chat(request: ChatRequest):
@@ -116,15 +132,15 @@ async def agent_chat(request: ChatRequest):
     session_id = request.session_id or str(uuid.uuid4())
     
     try:
-        strategies = request.effective_strategies
-        executor = _build_executor(config, strategies)
+        skills = request.effective_skills
+        executor = _build_executor(config, skills)
 
-        # Pass explicit strategies into context for the orchestrator.
-        # Direct assignment so caller-provided strategies always take precedence
+        # Pass explicit skills into context for the orchestrator.
+        # Direct assignment so caller-provided skills always take precedence
         # over any stale value carried in the context dict.
         ctx = dict(request.context or {})
-        if strategies:
-            ctx["strategies"] = strategies
+        if skills:
+            ctx["skills"] = skills
 
         # Offload the blocking call to a thread to avoid blocking the event loop.
         loop = asyncio.get_running_loop()
@@ -228,10 +244,10 @@ async def send_chat_to_notification(request: SendChatRequest):
     return {"success": True}
 
 
-def _build_executor(config, strategies: Optional[List[str]] = None):
+def _build_executor(config, skills: Optional[List[str]] = None):
     """Build and return a configured AgentExecutor (sync helper)."""
     from src.agent.factory import build_agent_executor
-    return build_agent_executor(config, skills=strategies)
+    return build_agent_executor(config, skills=skills)
 
 
 @router.post("/chat/stream")
@@ -254,12 +270,12 @@ async def agent_chat_stream(request: ChatRequest):
     loop = asyncio.get_running_loop()
     queue: asyncio.Queue = asyncio.Queue()
 
-    # Pass explicit strategies into context for the orchestrator.
-    # Direct assignment so caller-provided strategies always take precedence.
-    strategies = request.effective_strategies
+    # Pass explicit skills into context for the orchestrator.
+    # Direct assignment so caller-provided skills always take precedence.
+    skills = request.effective_skills
     stream_ctx = dict(request.context or {})
-    if strategies:
-        stream_ctx["strategies"] = strategies
+    if skills:
+        stream_ctx["skills"] = skills
 
     def progress_callback(event: dict):
         # Enrich tool events with display names
@@ -270,7 +286,7 @@ async def agent_chat_stream(request: ChatRequest):
 
     def run_sync():
         try:
-            executor = _build_executor(config, strategies)
+            executor = _build_executor(config, skills)
             result = executor.chat(
                 message=request.message,
                 session_id=session_id,

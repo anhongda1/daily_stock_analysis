@@ -244,11 +244,11 @@ class TestAgentRunStats(unittest.TestCase):
 
 
 # ============================================================
-# StrategyRouter
+# SkillRouter
 # ============================================================
 
 class TestStrategyRouter(unittest.TestCase):
-    """Test StrategyRouter selection logic."""
+    """Test skill router selection logic."""
 
     def test_user_requested_strategies_take_priority(self):
         from src.agent.strategies.router import StrategyRouter
@@ -284,7 +284,7 @@ class TestStrategyRouter(unittest.TestCase):
         router = StrategyRouter()
         ctx = AgentContext()
         result = router.select_strategies(ctx)
-        self.assertEqual(result, _DEFAULT_STRATEGIES[:3])
+        self.assertEqual(result, list(_DEFAULT_STRATEGIES[:3]))
 
     def test_detect_regime_bullish(self):
         from src.agent.strategies.router import StrategyRouter
@@ -342,7 +342,7 @@ class TestStrategyAggregator(unittest.TestCase):
         ctx.add_opinion(AgentOpinion(agent_name="strategy_bull_trend", signal="buy", confidence=0.7))
         result = agg.aggregate(ctx)
         self.assertIsNotNone(result)
-        self.assertEqual(result.agent_name, "strategy_consensus")
+        self.assertEqual(result.agent_name, "skill_consensus")
         self.assertEqual(result.signal, "buy")
 
     def test_mixed_signals_produce_hold(self):
@@ -499,11 +499,11 @@ class TestOrchestratorModes(unittest.TestCase):
         orch = self._make_orchestrator()
         ctx = orch._build_context(
             "Analyze 600519",
-            context={"stock_code": "600519", "stock_name": "贵州茅台", "strategies": ["bull_trend"]},
+            context={"stock_code": "600519", "stock_name": "贵州茅台", "skills": ["bull_trend"]},
         )
         self.assertEqual(ctx.stock_code, "600519")
         self.assertEqual(ctx.stock_name, "贵州茅台")
-        self.assertEqual(ctx.meta["strategies_requested"], ["bull_trend"])
+        self.assertEqual(ctx.meta["skills_requested"], ["bull_trend"])
 
     def test_build_context_extracts_code_from_query(self):
         orch = self._make_orchestrator()
@@ -764,7 +764,7 @@ class TestOrchestratorExecution(unittest.TestCase):
 
     def test_strategy_agents_are_selected_after_technical_stage(self):
         orch = self._make_orchestrator()
-        orch.mode = "strategy"
+        orch.mode = "specialist"
         ctx = AgentContext(query="分析600519", stock_code="600519")
         ctx.meta["response_mode"] = "chat"
 
@@ -804,17 +804,17 @@ class TestOrchestratorExecution(unittest.TestCase):
         decision = MagicMock(agent_name="decision")
         decision.run.return_value = self._stage_result("decision", raw_text="final answer")
 
-        def _build_strategy_agents(run_ctx):
+        def _build_specialist_agents(run_ctx):
             self.assertTrue(any(op.agent_name == "technical" for op in run_ctx.opinions))
             return [strategy]
 
         with patch.object(orch, "_build_agent_chain", return_value=[technical, intel, risk, decision]):
-            with patch.object(orch, "_build_strategy_agents", side_effect=_build_strategy_agents) as build_strategy_agents:
+            with patch.object(orch, "_build_specialist_agents", side_effect=_build_specialist_agents) as build_specialist_agents:
                 result = orch._execute_pipeline(ctx, parse_dashboard=False)
 
         self.assertTrue(result.success)
         self.assertEqual(result.content, "final answer")
-        build_strategy_agents.assert_called_once()
+        build_specialist_agents.assert_called_once()
         strategy.run.assert_called_once()
 
 
@@ -1027,7 +1027,7 @@ class TestBaseAgentMemoryIntegration(unittest.TestCase):
         memory.get_calibration.assert_called_once_with(
             agent_name="strategy_chan_theory",
             stock_code="600519",
-            strategy_id="chan_theory",
+            skill_id="chan_theory",
         )
 
 

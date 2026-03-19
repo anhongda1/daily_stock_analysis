@@ -39,15 +39,8 @@ _SKILL_MANAGER_PROTOTYPE = None
 # on the very first call, forcing a build rather than accidentally skipping it.
 _SENTINEL = object()
 # Track which custom_dir the prototype was built with so we can invalidate
-# the cache if AGENT_STRATEGY_DIR changes at runtime (e.g. via config reload).
+# the cache if AGENT_SKILL_DIR changes at runtime (e.g. via config reload).
 _SKILL_MANAGER_CUSTOM_DIR: object = _SENTINEL
-
-DEFAULT_AGENT_SKILLS = [
-    "bull_trend",
-    "ma_golden_cross",
-    "volume_breakout",
-    "shrink_pullback",
-]
 
 
 def get_tool_registry():
@@ -80,7 +73,7 @@ def get_skill_manager(config=None):
     YAML files.  Each clone is independent so ``.activate()`` calls do not
     bleed between requests.
 
-    Cache invalidation: if ``config.agent_strategy_dir`` changes at runtime
+    Cache invalidation: if ``config.agent_skill_dir`` changes at runtime
     (e.g. via the web settings reload), the prototype is rebuilt automatically.
     """
     global _SKILL_MANAGER_PROTOTYPE, _SKILL_MANAGER_CUSTOM_DIR
@@ -89,28 +82,28 @@ def get_skill_manager(config=None):
         from src.config import get_config
         config = get_config()
 
-    current_custom_dir = getattr(config, "agent_strategy_dir", None)
+    current_custom_dir = getattr(config, "agent_skill_dir", None)
     if _SKILL_MANAGER_PROTOTYPE is not None and current_custom_dir == _SKILL_MANAGER_CUSTOM_DIR:
         return copy.deepcopy(_SKILL_MANAGER_PROTOTYPE)
 
     from src.agent.skills.base import SkillManager
 
     if _SKILL_MANAGER_PROTOTYPE is not None:
-        logger.info("[AgentFactory] SkillManager prototype invalidated (agent_strategy_dir changed: %r → %r)",
+        logger.info("[AgentFactory] SkillManager prototype invalidated (agent_skill_dir changed: %r -> %r)",
                     _SKILL_MANAGER_CUSTOM_DIR, current_custom_dir)
 
     skill_manager = SkillManager()
-    skill_manager.load_builtin_strategies()
+    skill_manager.load_builtin_skills()
 
     if current_custom_dir:
         try:
-            skill_manager.load_custom_strategies(current_custom_dir)
+            skill_manager.load_custom_skills(current_custom_dir)
         except Exception as exc:
-            logger.warning("[AgentFactory] Failed to load custom strategies from %s: %s", current_custom_dir, exc)
+            logger.warning("[AgentFactory] Failed to load custom skills from %s: %s", current_custom_dir, exc)
 
     _SKILL_MANAGER_PROTOTYPE = skill_manager
     _SKILL_MANAGER_CUSTOM_DIR = current_custom_dir
-    logger.info("[AgentFactory] SkillManager prototype cached (%d strategies)", len(skill_manager._skills))
+    logger.info("[AgentFactory] SkillManager prototype cached (%d skills)", len(skill_manager._skills))
     return copy.deepcopy(_SKILL_MANAGER_PROTOTYPE)
 
 
@@ -124,9 +117,9 @@ def build_agent_executor(config=None, skills: Optional[List[str]] = None):
     Args:
         config: Application config object.  When *None*, ``get_config()`` is
                 called automatically.
-        skills: Strategy ids to activate.  When *None* falls back to
+        skills: Skill ids to activate.  When *None* falls back to
                 ``config.agent_skills``; if that is also empty falls back to
-                ``DEFAULT_AGENT_SKILLS``.
+                the central default skill set.
 
     Returns:
         A ready-to-call :class:`src.agent.executor.AgentExecutor` instance.
@@ -138,13 +131,14 @@ def build_agent_executor(config=None, skills: Optional[List[str]] = None):
     arch = getattr(config, "agent_arch", "single")
 
     from src.agent.llm_adapter import LLMToolAdapter
+    from src.agent.skills.defaults import get_default_active_skill_ids
 
     registry = get_tool_registry()
     skill_manager = get_skill_manager(config)
 
-    skills_to_activate = skills if skills is not None else (getattr(config, "agent_skills", None) or DEFAULT_AGENT_SKILLS)
+    skills_to_activate = skills if skills is not None else (getattr(config, "agent_skills", None) or get_default_active_skill_ids())
     skill_manager.activate(skills_to_activate if skills_to_activate else ["all"])
-    logger.info("[AgentFactory] Activated strategies: %s (arch=%s)", skills_to_activate, arch)
+    logger.info("[AgentFactory] Activated skills: %s (arch=%s)", skills_to_activate, arch)
 
     llm_adapter = LLMToolAdapter(config)
 

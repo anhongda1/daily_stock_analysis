@@ -1485,9 +1485,9 @@ _FIELD_DEFINITIONS: Dict[str, Dict[str, Any]] = {
         "validation": {},
         "display_order": 30,
     },
-    "AGENT_STRATEGY_DIR": {
-        "title": "Agent Strategy Dir",
-        "description": "Directory containing agent strategy YAML files.",
+    "AGENT_SKILL_DIR": {
+        "title": "Agent Skill Dir",
+        "description": "Directory containing agent skill YAML files.",
         "category": "agent",
         "data_type": "string",
         "ui_control": "text",
@@ -1532,7 +1532,7 @@ _FIELD_DEFINITIONS: Dict[str, Dict[str, Any]] = {
     },
     "AGENT_ORCHESTRATOR_MODE": {
         "title": "Orchestrator Mode",
-        "description": "Pipeline mode when AGENT_ARCH=multi. 'quick' (tech→decision), 'standard' (tech→intel→decision), 'full' (tech→intel→risk→decision), 'strategy' (full + per-strategy agents).",
+        "description": "Pipeline mode when AGENT_ARCH=multi. 'quick' (tech→decision), 'standard' (tech→intel→decision), 'full' (tech→intel→risk→decision), 'specialist' (full + per-skill specialist agents).",
         "category": "agent",
         "data_type": "string",
         "ui_control": "select",
@@ -1544,7 +1544,7 @@ _FIELD_DEFINITIONS: Dict[str, Dict[str, Any]] = {
             {"label": "Quick", "value": "quick"},
             {"label": "Standard", "value": "standard"},
             {"label": "Full", "value": "full"},
-            {"label": "Strategy", "value": "strategy"},
+            {"label": "Specialist", "value": "specialist"},
         ],
         "validation": {},
         "display_order": 61,
@@ -1619,9 +1619,9 @@ _FIELD_DEFINITIONS: Dict[str, Dict[str, Any]] = {
         "validation": {},
         "display_order": 66,
     },
-    "AGENT_STRATEGY_AUTOWEIGHT": {
-        "title": "Auto-Weight Strategies",
-        "description": "Automatically weight strategy opinions by their historical backtest performance.",
+    "AGENT_SKILL_AUTOWEIGHT": {
+        "title": "Auto-Weight Skills",
+        "description": "Automatically weight skill opinions by their historical backtest performance.",
         "category": "agent",
         "data_type": "boolean",
         "ui_control": "switch",
@@ -1633,9 +1633,9 @@ _FIELD_DEFINITIONS: Dict[str, Dict[str, Any]] = {
         "validation": {},
         "display_order": 67,
     },
-    "AGENT_STRATEGY_ROUTING": {
-        "title": "Strategy Routing",
-        "description": "Strategy selection mode. 'auto' detects market regime and picks relevant strategies; 'manual' uses AGENT_SKILLS list only.",
+    "AGENT_SKILL_ROUTING": {
+        "title": "Skill Routing",
+        "description": "Skill selection mode. 'auto' detects market regime and picks relevant skills; 'manual' uses AGENT_SKILLS list only.",
         "category": "agent",
         "data_type": "string",
         "ui_control": "select",

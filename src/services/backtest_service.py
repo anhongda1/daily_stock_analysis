@@ -243,11 +243,11 @@ class BacktestService:
             self.get_summary(scope="stock", code=code, eval_window_days=eval_window_days)
         )
 
-    def get_strategy_summary(self, strategy_id: str, *, eval_window_days: Optional[int] = None) -> Optional[Dict[str, Any]]:
-        """Return strategy-like summary metrics for Agent memory consumers.
+    def get_skill_summary(self, skill_id: str, *, eval_window_days: Optional[int] = None) -> Optional[Dict[str, Any]]:
+        """Return skill-like summary metrics for Agent memory consumers.
 
         The current backtest storage layer only persists overall / per-stock rollups.
-        Until strategy-tagged backtest summaries are available, use the overall rollup
+        Until skill-tagged backtest summaries are available, use the overall rollup
         so memory and calibration features can still consume real historical metrics.
         """
         summary = self.get_global_summary(eval_window_days=eval_window_days)
@@ -255,8 +255,17 @@ class BacktestService:
             return None
 
         normalized = dict(summary)
-        normalized["strategy_id"] = strategy_id
+        normalized["skill_id"] = skill_id
         normalized["source_scope"] = summary.get("scope", "overall")
+        return normalized
+
+    def get_strategy_summary(self, strategy_id: str, *, eval_window_days: Optional[int] = None) -> Optional[Dict[str, Any]]:
+        """Compatibility wrapper for legacy strategy-based callers."""
+        summary = self.get_skill_summary(strategy_id, eval_window_days=eval_window_days)
+        if summary is None:
+            return None
+        normalized = dict(summary)
+        normalized["strategy_id"] = strategy_id
         return normalized
 
     def _resolve_analysis_date(self, analysis) -> Optional[date]:

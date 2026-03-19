@@ -33,6 +33,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 - 🌐 **CORS wildcard + credentials compatibility** — `CORS_ALLOW_ALL=true` no longer combines `allow_origins=["*"]` with credentialed requests, avoiding browser-side cross-origin failures in demo/development setups.
 - 🧭 **Unavailable Agent settings hidden from Web UI** — Deep Research / Event Monitor controls are now treated as compatibility-only metadata in the current branch and are removed from the Settings page to avoid exposing non-functional toggles.
 - 💱 **持仓页汇率手动刷新入口补齐**（#748）— Web `/portfolio` 页面现在会在“汇率状态”卡片中展示“刷新汇率”按钮，直接调用现有 `POST /api/v1/portfolio/fx/refresh` 接口；刷新后会仅重载快照与风险数据，并以内联摘要反馈“已更新 / 仍 stale / 刷新失败”的结果，减少用户对 `fxStale` 长时间停留的误解。
+- 🧩 **Agent skill unification**（#779）— Multi-Agent runtime, API, Web chat, and config metadata now treat YAML trading profiles as a single `skill` concept; `/api/v1/agent/skills` becomes the primary discovery endpoint, `AGENT_SKILL_*` becomes the primary config surface, and legacy `strategy` names remain only as compatibility aliases.
+- 🗂️ **Skill bundle alignment** — `SkillManager` now supports mainstream `SKILL.md` bundles with YAML frontmatter and supporting files, while the multi-agent runtime’s optional forked execution path is renamed to `specialist` mode to keep “skills” and “specialist sub-agents” as separate concepts.
 ### Changed
 
 - **Dashboard state slice and workspace closure** — moved Home / Dashboard state into `stockPoolStore`, consolidated history selection, report loading, task syncing, polling refresh, and markdown drawer handling under a single state slice.

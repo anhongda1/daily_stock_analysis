@@ -308,7 +308,7 @@ class TestSkillManager(unittest.TestCase):
         instructions = self.manager.get_skill_instructions()
         self.assertIn("Test Skill (demo)", instructions)
         self.assertIn("Instructions for demo", instructions)
-        self.assertIn("策略 1:", instructions)
+        self.assertIn("技能 1:", instructions)
 
     def test_get_required_tools(self):
         s1 = _make_skill("s1")
@@ -545,6 +545,67 @@ instructions: 自然语言策略描述 {name}
             self.assertEqual(names, {"strategy_a", "strategy_b"})
         finally:
             import shutil
+            shutil.rmtree(tmpdir)
+
+    def test_load_skill_bundle_markdown(self):
+        """Load a Claude/Codex-style SKILL.md bundle."""
+        import shutil
+        import tempfile
+
+        from src.agent.skills.base import load_skill_from_markdown
+
+        tmpdir = Path(tempfile.mkdtemp())
+        try:
+            skill_dir = tmpdir / "explain-code"
+            skill_dir.mkdir(parents=True)
+            (skill_dir / "SKILL.md").write_text(
+                """---
+name: explain-code
+description: Explain code with diagrams
+allowed-tools: Read, Grep
+context: fork
+agent: explorer
+---
+When explaining code, always include an ASCII diagram.
+""",
+                encoding="utf-8",
+            )
+            skill = load_skill_from_markdown(skill_dir / "SKILL.md")
+            self.assertEqual(skill.name, "explain-code")
+            self.assertEqual(skill.description, "Explain code with diagrams")
+            self.assertEqual(skill.allowed_tools, ["Read", "Grep"])
+            self.assertEqual(skill.execution_context, "fork")
+            self.assertEqual(skill.subagent_type, "explorer")
+            self.assertEqual(skill.bundle_dir, str(skill_dir))
+        finally:
+            shutil.rmtree(tmpdir)
+
+    def test_load_skill_bundle_defaults_name_and_description(self):
+        """SKILL.md should default name to directory and description to first paragraph."""
+        import shutil
+        import tempfile
+
+        from src.agent.skills.base import load_skill_from_markdown
+
+        tmpdir = Path(tempfile.mkdtemp())
+        try:
+            skill_dir = tmpdir / "api-conventions"
+            skill_dir.mkdir(parents=True)
+            (skill_dir / "SKILL.md").write_text(
+                """---
+allowed-tools: Read
+---
+API design patterns for this codebase.
+
+Use RESTful naming and consistent validation.
+""",
+                encoding="utf-8",
+            )
+            skill = load_skill_from_markdown(skill_dir / "SKILL.md")
+            self.assertEqual(skill.name, "api-conventions")
+            self.assertEqual(skill.description, "API design patterns for this codebase.")
+            self.assertEqual(skill.display_name, "api-conventions")
+        finally:
             shutil.rmtree(tmpdir)
 
     def test_custom_overrides_builtin(self):

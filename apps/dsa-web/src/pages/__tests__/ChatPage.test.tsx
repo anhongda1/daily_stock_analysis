@@ -46,10 +46,11 @@ const mockStoreState = {
 
 vi.mock('../../api/agent', () => ({
   agentApi: {
-    getStrategies: vi.fn().mockResolvedValue({
-      strategies: [
-        { id: 'bull_trend', name: '趋势分析', description: '测试策略' },
+    getSkills: vi.fn().mockResolvedValue({
+      skills: [
+        { id: 'bull_trend', name: '趋势分析', description: '测试技能' },
       ],
+      default_skill_id: 'bull_trend',
     }),
     deleteChatSession: vi.fn().mockResolvedValue(undefined),
     sendChat: vi.fn().mockResolvedValue({ success: true }),
@@ -168,7 +169,7 @@ describe('ChatPage', () => {
           },
         }),
         expect.objectContaining({
-          strategyName: '趋势分析',
+          skillName: '趋势分析',
         }),
       );
     });
@@ -211,7 +212,7 @@ describe('ChatPage', () => {
           context: undefined,
         }),
         expect.objectContaining({
-          strategyName: '趋势分析',
+          skillName: '趋势分析',
         }),
       );
     });
@@ -269,7 +270,7 @@ describe('ChatPage', () => {
           }),
         }),
         expect.objectContaining({
-          strategyName: '趋势分析',
+          skillName: '趋势分析',
         }),
       );
     });
@@ -296,7 +297,7 @@ describe('ChatPage', () => {
           },
         }),
         expect.objectContaining({
-          strategyName: '趋势分析',
+          skillName: '趋势分析',
         }),
       );
     });
@@ -392,7 +393,7 @@ describe('ChatPage', () => {
           }),
         }),
         expect.objectContaining({
-          strategyName: '趋势分析',
+          skillName: '趋势分析',
         }),
       );
     });

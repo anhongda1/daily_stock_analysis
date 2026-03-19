@@ -140,7 +140,7 @@ Go to your forked repo → `Settings` → `Secrets and variables` → `Actions` 
 | `AGENT_MODE` | Enable Agent strategy chat mode (`true`/`false`, default `false`) | Optional |
 | `AGENT_LITELLM_MODEL` | Optional Agent-only primary model; when empty it inherits `LITELLM_MODEL`, and bare names are normalized to `openai/<model>` | Optional |
 | `AGENT_MAX_STEPS` | Max reasoning steps for Agent mode (default `10`) | Optional |
-| `AGENT_STRATEGY_DIR` | Custom strategy directory (default built-in `strategies/`) | Optional |
+| `AGENT_SKILL_DIR` | Custom skill directory (default built-in `strategies/` compatibility path) | Optional |
 
 **Stock Code Format**
 
@@ -436,7 +436,7 @@ Enable the FastAPI service for configuration management and triggering analysis 
 | `/api/v1/backtest/results` | GET | Query backtest results (paginated) |
 | `/api/v1/backtest/performance` | GET | Get overall backtest performance |
 | `/api/v1/backtest/performance/{code}` | GET | Get per-stock backtest performance |
-| `/api/v1/agent/strategies` | GET | Get available built-in/custom strategies |
+| `/api/v1/agent/skills` | GET | Get available built-in/custom skills |
 | `/api/v1/agent/chat/stream` | POST (SSE) | Stream multi-turn Agent strategy chat |
 | `/api/health` | GET | Health check |
 
