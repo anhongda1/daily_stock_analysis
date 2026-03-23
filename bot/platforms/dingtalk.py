@@ -291,6 +291,13 @@ class DingtalkPlatform(BotPlatform):
                 }
             
             # 发送请求
+            print("https://oapi.dingtalk.com/robot/send?access_token=9677975f3fce5806f4df7f309a58bf101363268cd02c79a7af0d7568e8d0160a：", session_webhook)
+
+resp = requests.post(
+    "https://oapi.dingtalk.com/robot/send?access_token=9677975f3fce5806f4df7f309a58bf101363268cd02c79a7af0d7568e8d0160a",
+    json=payload,
+    timeout=10
+)
             resp = requests.post(
                 session_webhook,
                 json=payload,
