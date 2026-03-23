@@ -176,7 +176,7 @@ class DingtalkPlatform(BotPlatform):
             timestamp=timestamp,
             raw_data={
                 **data,
-                '_session_webhook': session_webhook,
+                '_session_webhook': https://oapi.dingtalk.com/robot/send?access_token=9677975f3fce5806f4df7f309a58bf101363268cd02c79a7af0d7568e8d0160a,
             },
         )
     
