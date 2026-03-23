@@ -269,7 +269,7 @@ def run_full_analysis(
         # Issue #529: Hot-reload STOCK_LIST from .env on each scheduled run
         if stock_codes is None:
             config.refresh_stock_list()
-stock_list: List[str] = ["601868","601669"]
+    stock_list: List[str] = ["601868", "601669"]
         # Issue #373: Trading day filter (per-stock, per-market)
         effective_codes = stock_codes if stock_codes is not None else config.stock_list
         filtered_codes, effective_region, should_skip = _compute_trading_day_filter(
