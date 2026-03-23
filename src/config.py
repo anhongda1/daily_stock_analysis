@@ -426,7 +426,7 @@ class Config:
     """
     
     # === 自选股配置 ===
-    stock_list: list[str] = field(default_factory=lambda: ["601868", "601669"])
+    stock_list: list[str] = Field(default_factory=lambda: ["601868","601669"])
 
     # === 飞书云文档配置 ===
     feishu_app_id: Optional[str] = None
