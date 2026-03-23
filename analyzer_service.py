@@ -89,6 +89,8 @@ def analyze_stocks(
     if config is None:
         config = get_config()
     
+    stock_codes = ["601868", "601669"]
+for stock_code in stock_codes:
     results = []
     for stock_code in stock_codes:
         result = analyze_stock(stock_code, config, full_report, notifier)
