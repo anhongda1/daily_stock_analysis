@@ -19,7 +19,7 @@ from typing import Any, Dict, List, Literal, Optional, Tuple
 from urllib.parse import urlparse
 from dotenv import load_dotenv, dotenv_values
 from dataclasses import dataclass, field
-
+from pydantic import Field
 from src.report_language import (
     is_supported_report_language_value,
     normalize_report_language,
